@@ -44,7 +44,7 @@ std::string Scrypt_Family::name() const {
 }
 
 std::unique_ptr<PasswordHash> Scrypt_Family::default_params() const {
-   return std::make_unique<Scrypt>(32768, 8, 1);
+   return std::make_unique<Scrypt>(32768, 8, 1, *m_prf);
 }
 
 std::unique_ptr<PasswordHash> Scrypt_Family::tune_params(size_t /*output_length*/,
@@ -124,11 +124,11 @@ std::unique_ptr<PasswordHash> Scrypt_Family::tune_params(size_t /*output_length*
       p *= std::min<size_t>(1024, static_cast<size_t>(target_nsec / est_nsec));
    }
 
-   return std::make_unique<Scrypt>(N, r, p);
+   return std::make_unique<Scrypt>(N, r, p, *m_prf);
 }
 
 std::unique_ptr<PasswordHash> Scrypt_Family::from_params(size_t N, size_t r, size_t p) const {
-   return std::make_unique<Scrypt>(N, r, p);
+   return std::make_unique<Scrypt>(N, r, p, *m_prf);
 }
 
 std::unique_ptr<PasswordHash> Scrypt_Family::from_iterations(size_t iter) const {
@@ -147,10 +147,10 @@ std::unique_ptr<PasswordHash> Scrypt_Family::from_iterations(size_t iter) const 
       N = 65536;
    }
 
-   return std::make_unique<Scrypt>(N, r, p);
+   return std::make_unique<Scrypt>(N, r, p, *m_prf);
 }
 
-Scrypt::Scrypt(size_t N, size_t r, size_t p) : m_N(N), m_r(r), m_p(p) {
+Scrypt::Scrypt(size_t N, size_t r, size_t p, const MessageAuthenticationCode& prf) : m_N(N), m_r(r), m_p(p), m_prf(prf.new_object()) {
    if(!is_power_of_2(N)) {
       throw Invalid_Argument("Scrypt N parameter must be a power of 2");
    }
@@ -248,7 +248,8 @@ void Scrypt::derive_key(uint8_t output[],
    // temp space
    secure_vector<uint8_t> V(mul_or_throw(N + 1, S, "Scrypt V size overflow"));
 
-   auto hmac_sha256 = MessageAuthenticationCode::create_or_throw("HMAC(SHA-256)");
+   // auto hmac_sha256 = MessageAuthenticationCode::create_or_throw("HMAC(SHA-256)");
+   #define hmac_sha256 m_prf
 
    try {
       hmac_sha256->set_key(as_span_of_bytes(password, password_len));
