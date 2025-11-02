@@ -78,8 +78,11 @@ std::unique_ptr<PasswordHashFamily> PasswordHashFamily::create(std::string_view 
 #endif
 
 #if defined(BOTAN_HAS_SCRYPT)
-   if(req.matches("Scrypt")) {
-      return std::make_unique<Scrypt_Family>();
+   if(auto m = req.match("Scrypt({prf:str=HMAC(SHA-256)})")) {
+      if(auto prf = MessageAuthenticationCode::create(m->str("prf"))) {
+         return std::make_unique<Scrypt_Family>(std::move(prf));
+      }
+      return nullptr;
    }
 #endif
 

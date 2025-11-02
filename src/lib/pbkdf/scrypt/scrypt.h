@@ -8,6 +8,7 @@
 #ifndef BOTAN_SCRYPT_H_
 #define BOTAN_SCRYPT_H_
 
+#include <botan/mac.h>
 #include <botan/pwdhash.h>
 
 // Use pwdhash.h
@@ -20,7 +21,7 @@ namespace Botan {
 */
 class BOTAN_PUBLIC_API(2, 8) Scrypt final : public PasswordHash {
    public:
-      Scrypt(size_t N, size_t r, size_t p);
+      Scrypt(size_t N, size_t r, size_t p, const MessageAuthenticationCode& prf);
 
       /**
       * Derive a new key under the current Scrypt parameter set
@@ -44,10 +45,13 @@ class BOTAN_PUBLIC_API(2, 8) Scrypt final : public PasswordHash {
 
    private:
       size_t m_N, m_r, m_p;
+      std::unique_ptr<MessageAuthenticationCode> m_prf;
 };
 
 class BOTAN_PUBLIC_API(2, 8) Scrypt_Family final : public PasswordHashFamily {
    public:
+      explicit Scrypt_Family(std::unique_ptr<MessageAuthenticationCode> prf) : m_prf(std::move(prf)) {}
+
       std::string name() const override;
 
       std::unique_ptr<PasswordHash> tune_params(size_t output_len,
@@ -60,6 +64,9 @@ class BOTAN_PUBLIC_API(2, 8) Scrypt_Family final : public PasswordHashFamily {
       std::unique_ptr<PasswordHash> from_iterations(size_t iter) const override;
 
       std::unique_ptr<PasswordHash> from_params(size_t N, size_t r, size_t p) const override;
+
+   private:
+      std::unique_ptr<MessageAuthenticationCode> m_prf;
 };
 
 /**
