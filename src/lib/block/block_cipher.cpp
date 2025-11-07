@@ -146,12 +146,6 @@ std::unique_ptr<BlockCipher> BlockCipher::create(std::string_view algo, std::str
    }
 #endif
 
-#if defined(BOTAN_HAS_SHACAL2)
-   if(algo == "SHACAL2") {
-      return std::make_unique<SHACAL2>();
-   }
-#endif
-
 #if defined(BOTAN_HAS_TWOFISH)
    if(algo == "Twofish") {
       return std::make_unique<Twofish>();
@@ -258,6 +252,12 @@ std::unique_ptr<BlockCipher> BlockCipher::create(std::string_view algo, std::str
          const size_t block_size = req.arg_as_integer(2, 1024);
          return std::make_unique<Lion>(std::move(hash), std::move(stream), block_size);
       }
+   }
+#endif
+
+#if defined(BOTAN_HAS_SHACAL2)
+   if(req.algo_name() == "SHACAL2") {
+      return std::make_unique<SHACAL2>(req.arg_count() == 1 && req.arg(0) == "LE");
    }
 #endif
 

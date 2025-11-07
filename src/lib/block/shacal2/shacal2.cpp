@@ -91,14 +91,26 @@ void SHACAL2::encrypt_n(const uint8_t in[], uint8_t out[], size_t blocks) const 
 #endif
 
    for(size_t i = 0; i != blocks; ++i) {
-      uint32_t A = load_be<uint32_t>(in, 0);
-      uint32_t B = load_be<uint32_t>(in, 1);
-      uint32_t C = load_be<uint32_t>(in, 2);
-      uint32_t D = load_be<uint32_t>(in, 3);
-      uint32_t E = load_be<uint32_t>(in, 4);
-      uint32_t F = load_be<uint32_t>(in, 5);
-      uint32_t G = load_be<uint32_t>(in, 6);
-      uint32_t H = load_be<uint32_t>(in, 7);
+      uint32_t A, B, C, D, E, F, G, H;
+      if(m_le) {
+         A = load_le<uint32_t>(in, 0);
+         B = load_le<uint32_t>(in, 1);
+         C = load_le<uint32_t>(in, 2);
+         D = load_le<uint32_t>(in, 3);
+         E = load_le<uint32_t>(in, 4);
+         F = load_le<uint32_t>(in, 5);
+         G = load_le<uint32_t>(in, 6);
+         H = load_le<uint32_t>(in, 7);
+      } else {
+         A = load_be<uint32_t>(in, 0);
+         B = load_be<uint32_t>(in, 1);
+         C = load_be<uint32_t>(in, 2);
+         D = load_be<uint32_t>(in, 3);
+         E = load_be<uint32_t>(in, 4);
+         F = load_be<uint32_t>(in, 5);
+         G = load_be<uint32_t>(in, 6);
+         H = load_be<uint32_t>(in, 7);
+      }
 
       for(size_t r = 0; r != 64; r += 8) {
          SHACAL2_Fwd(A, B, C, D, E, F, G, H, m_RK[r + 0]);
@@ -111,7 +123,11 @@ void SHACAL2::encrypt_n(const uint8_t in[], uint8_t out[], size_t blocks) const 
          SHACAL2_Fwd(B, C, D, E, F, G, H, A, m_RK[r + 7]);
       }
 
-      store_be(out, A, B, C, D, E, F, G, H);
+      if(m_le) {
+         store_le(out, A, B, C, D, E, F, G, H);
+      } else {
+         store_be(out, A, B, C, D, E, F, G, H);
+      }
 
       in += BLOCK_SIZE;
       out += BLOCK_SIZE;
@@ -156,14 +172,26 @@ void SHACAL2::decrypt_n(const uint8_t in[], uint8_t out[], size_t blocks) const 
 #endif
 
    for(size_t i = 0; i != blocks; ++i) {
-      uint32_t A = load_be<uint32_t>(in, 0);
-      uint32_t B = load_be<uint32_t>(in, 1);
-      uint32_t C = load_be<uint32_t>(in, 2);
-      uint32_t D = load_be<uint32_t>(in, 3);
-      uint32_t E = load_be<uint32_t>(in, 4);
-      uint32_t F = load_be<uint32_t>(in, 5);
-      uint32_t G = load_be<uint32_t>(in, 6);
-      uint32_t H = load_be<uint32_t>(in, 7);
+      uint32_t A, B, C, D, E, F, G, H;
+      if(m_le) {
+         A = load_le<uint32_t>(in, 0);
+         B = load_le<uint32_t>(in, 1);
+         C = load_le<uint32_t>(in, 2);
+         D = load_le<uint32_t>(in, 3);
+         E = load_le<uint32_t>(in, 4);
+         F = load_le<uint32_t>(in, 5);
+         G = load_le<uint32_t>(in, 6);
+         H = load_le<uint32_t>(in, 7);
+      } else {
+         A = load_be<uint32_t>(in, 0);
+         B = load_be<uint32_t>(in, 1);
+         C = load_be<uint32_t>(in, 2);
+         D = load_be<uint32_t>(in, 3);
+         E = load_be<uint32_t>(in, 4);
+         F = load_be<uint32_t>(in, 5);
+         G = load_be<uint32_t>(in, 6);
+         H = load_be<uint32_t>(in, 7);
+      }
 
       for(size_t r = 0; r != 64; r += 8) {
          SHACAL2_Rev(B, C, D, E, F, G, H, A, m_RK[63 - r]);
@@ -176,7 +204,11 @@ void SHACAL2::decrypt_n(const uint8_t in[], uint8_t out[], size_t blocks) const 
          SHACAL2_Rev(A, B, C, D, E, F, G, H, m_RK[56 - r]);
       }
 
-      store_be(out, A, B, C, D, E, F, G, H);
+      if(m_le) {
+         store_le(out, A, B, C, D, E, F, G, H);
+      } else {
+         store_be(out, A, B, C, D, E, F, G, H);
+      }
 
       in += BLOCK_SIZE;
       out += BLOCK_SIZE;
@@ -207,7 +239,11 @@ void SHACAL2::key_schedule(std::span<const uint8_t> key) {
       clear_mem(m_RK.data(), m_RK.size());
    }
 
-   load_be(m_RK.data(), key.data(), key.size() / 4);
+   if(m_le) {
+      load_le(m_RK.data(), key.data(), key.size() / 4);
+   } else {
+      load_be(m_RK.data(), key.data(), key.size() / 4);
+   }
 
    for(size_t i = 16; i != 64; ++i) {
       const uint32_t sigma0_15 = sigma<7, 18, 3>(m_RK[i - 15]);
