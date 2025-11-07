@@ -18,15 +18,16 @@ namespace Botan {
 */
 class SHACAL2 final : public Block_Cipher_Fixed_Params<32, 16, 64, 4> {
    public:
+      SHACAL2(bool le) : m_le(le) {}
       void encrypt_n(const uint8_t in[], uint8_t out[], size_t blocks) const override;
       void decrypt_n(const uint8_t in[], uint8_t out[], size_t blocks) const override;
 
       std::string provider() const override;
       void clear() override;
 
-      std::string name() const override { return "SHACAL2"; }
+      std::string name() const override { return m_le ? "SHACAL2(LE)" : "SHACAL2"; }
 
-      std::unique_ptr<BlockCipher> new_object() const override { return std::make_unique<SHACAL2>(); }
+      std::unique_ptr<BlockCipher> new_object() const override { return std::make_unique<SHACAL2>(m_le); }
 
       size_t parallelism() const override;
       bool has_keying_material() const override;
@@ -58,6 +59,7 @@ class SHACAL2 final : public Block_Cipher_Fixed_Params<32, 16, 64, 4> {
 #endif
 
       secure_vector<uint32_t> m_RK;
+      bool m_le;
 };
 
 }  // namespace Botan
